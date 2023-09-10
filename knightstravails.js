@@ -1,3 +1,4 @@
+
 const node = (vertices) => {
   children = [];
   return {
@@ -104,18 +105,63 @@ const knightMoves = (start, end) => {
   // 1 in board is traversed
   //console.log(gboard);
 
+  let queue1 = [];
+  let queue2 = [];
+  let Q1 = true;
+  let level = 0; // final number is earliest occurence
+  let numBFS = 0;
+  queue1.push(startNode);
+
+  // bfs function to find earliest occurence of end vertices
+  // then use in below recursion to traverse the tree
+  (function bfs() {
+    while (queue1.length > 0 || queue2.length > 0) {  
+      let currentQueue;
+      let toAddQueue;
+      if (Q1) {
+        currentQueue = queue1;
+        toAddQueue = queue2;
+      }
+      else {
+        currentQueue = queue2;
+        toAddQueue = queue1;
+      }
+
+      while (currentQueue.length > 0) {
+        ++numBFS;
+        let tmp = currentQueue.shift();
+        if (tmp.vertices[0] === end[0] &&
+          tmp.vertices[1] === end[1]) {
+          return;
+        }
+
+        Array.from(checkPaths(tmp.vertices, gboard))
+          .forEach((v) => {
+            toAddQueue.push(node(v));
+          });
+      }
+      Q1 ? Q1 = false : Q1 = true;
+      ++level;
+    }
+  })();
+  console.log(level);
+  console.log(numBFS);
+
+  // path traversal
   const searchPath = (function re(startN, end) {
     ++numberOfTraversals;
     gboard[startN.vertices[0]][startN.vertices[1]] = 1;
     currentPath.push([startN.vertices[0], startN.vertices[1]]);
 
-    if (shortestPath.length > 0) {
-      // COLLECTING paths
-      // make it >= to return early
-      // or > to still traverse even if path is same length
-      if (currentPath.length > shortestPath.length) return;
-    }
-    
+    if (shortestPath.length > 0) return; // bfs check
+    //if (shortestPath.length > 0) { // recursive check
+    // COLLECTING paths
+    // make it >= to return early
+    // or > to still traverse even if path is same length
+    //if (currentPath.length >= shortestPath.length) return; // recursive check
+
+    //} //recursive check
+
     //check if start and end vertices match
     if (startN.vertices[0] === end[0] &&
       startN.vertices[1] === end[1]) {
@@ -136,10 +182,13 @@ const knightMoves = (start, end) => {
       return;
     }
 
+    // run only base on level from early bfs function...
+    if (currentPath.length >= level + 1) return; //bfs check
+
     //check paths then add to children property of current node
     startN.children = Array.from(checkPaths(startN.vertices, gboard))
       .map((v) => node(v));
-    
+
     //recursively traverse each path
     while (startN.children.length > 0) {
       let tmp = startN.children.pop();
@@ -148,7 +197,7 @@ const knightMoves = (start, end) => {
       gboard[tmp.vertices[0]][tmp.vertices[1]] = 0;
     }
   })(startNode, end);
-  
+
   // Print with reverse rows...
   let strBoard = '';
   for (let i = 7; i >= 0; i--) {
@@ -157,34 +206,39 @@ const knightMoves = (start, end) => {
   }
   console.log(strBoard);
   console.log(numberOfTraversals);
-  console.log(`You made it in ${shortestPath.length-1} moves!`);
+  console.log(`You made it in ${shortestPath.length - 1} moves!`);
   let str = shortestPath.reduce((acc, curr) => {
-    return `${acc} => [${Math.abs(curr[0]-7)},${curr[1]}]`;
+    return `${acc} => [${Math.abs(curr[0] - 7)},${curr[1]}]`;
   }, '');
   console.log(str);
 
-  console.log('Alternative paths below:');
+  //console.log('Alternative paths below:');
   otherShortPath.forEach((path) => {
     let tmp = path.reduce((acc, curr) => {
-      return `${acc} => [${Math.abs(curr[0]-7)},${curr[1]}]`;
+      return `${acc} => [${Math.abs(curr[0] - 7)},${curr[1]}]`;
     }, '');
     console.log(tmp);
   });
 };
 
 
-//return {
-//  knightMoves
-//};
 
-//for testing
+
+
+
+
+
+
 function tester() {
-  //const k = knightsTravails;
   (function reverseRow(start, end) {
     // from reversed row input to normal array row
     start[0] = Math.abs(start[0] - 7);
     end[0] = Math.abs(end[0] - 7);
     knightMoves(start, end);
-  })([7,7], [5,2]);
+  })([0, 0], [7, 7]);
 }
 tester();
+
+//export {
+//  knightMoves
+//};
